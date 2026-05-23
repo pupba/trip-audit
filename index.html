@@ -114,6 +114,22 @@
 
     </main>
 
+    <div id="toastMsg" class="fixed top-5 left-1/2 -translate-x-1/2 bg-gray-900/95 backdrop-blur text-white px-5 py-3 rounded-full shadow-2xl text-sm font-bold transition-all duration-300 transform -translate-y-24 opacity-0 z-[100] flex items-center gap-2 whitespace-nowrap pointer-events-none">
+        <span id="toastIcon"></span>
+        <span id="toastText"></span>
+    </div>
+
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 transition-opacity duration-200 opacity-0">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl transform transition-transform duration-200 scale-95" id="confirmBox">
+            <h3 class="text-lg font-extrabold text-gray-900 mb-2">🗑️ 증빙 삭제</h3>
+            <p class="text-sm text-gray-600 mb-6">이 증빙 기록을 완전히 삭제할까요?</p>
+            <div class="flex gap-2">
+                <button type="button" id="btnCancel" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-bold transition-colors">취소</button>
+                <button type="button" id="btnConfirm" class="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-sm font-bold transition-colors shadow-lg shadow-rose-500/30">삭제</button>
+            </div>
+        </div>
+    </div>
+
     <div class="fixed bottom-0 left-0 right-0 p-4 bg-gray-50/80 backdrop-blur-sm border-t border-gray-200 z-50">
         <div class="max-w-xl mx-auto">
             <button id="exportZipBtn" class="w-full bg-gradient-to-r from-gray-800 to-gray-950 hover:from-gray-900 hover:to-black text-white font-bold py-4 px-4 rounded-xl shadow-lg text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
@@ -185,37 +201,67 @@
 
             // --- Multi-Image Logic (★핵심 수정 포인트) ---
 
+            // --- Multi-Image Logic (누적 및 개별 삭제 개선) ---
+
+            function renderImagePreviews() {
+                imagePreviewContainer.innerHTML = '';
+                fileCountLabel.textContent = `${currentFilesData.length}개의 이미지 선택됨 (최대5장)`;
+
+                currentFilesData.forEach(fileObj => {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = 'relative aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm';
+                    imgWrapper.innerHTML = `
+                        <img src="${fileObj.data}" class="w-full h-full object-cover">
+                        <button type="button" data-id="${fileObj.id}" class="remove-img-btn absolute top-1 right-1 bg-black/60 backdrop-blur-md text-white rounded-full w-6 h-6 flex items-center justify-center text-[10px] active:scale-90 transition-transform">
+                            ✕
+                        </button>
+                    `;
+                    imagePreviewContainer.appendChild(imgWrapper);
+                });
+            }
+
             imageFilesInput.addEventListener('change', function(e) {
                 const files = Array.from(e.target.files);
                 if(files.length === 0) return;
 
-                // Max 5 images per record for localstorage performance
-                const targetFiles = files.slice(0, 5);
-                fileCountLabel.textContent = `${targetFiles.length}개의 이미지 선택됨 (최대5장)`;
+                // 잔여 슬롯 계산
+                const remainingSlots = 5 - currentFilesData.length;
+                const filesToAdd = files.slice(0, remainingSlots);
 
-                imagePreviewContainer.innerHTML = ''; // Clear previous previews
-                currentFilesData = []; // Reset state
+                if (files.length > remainingSlots && remainingSlots > 0) {
+                    showToast('⚠️', `최대 5장까지만 등록 가능합니다. ${filesToAdd.length}장만 추가됩니다.`);
+                } else if (remainingSlots === 0) {
+                    showToast('🚫', '이미 최대 5장의 사진이 등록되어 있습니다.');
+                    imageFilesInput.value = ''; // 초기화
+                    return;
+                }
 
-                targetFiles.forEach((file, index) => {
+                filesToAdd.forEach((file, index) => {
                     const reader = new FileReader();
                     reader.onload = function(evt) {
                         const base64String = evt.target.result;
-                        // Store as object with generated unique name
                         currentFilesData.push({
+                            id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // 삭제용 고유 ID
                             name: `img_${Date.now()}_${index}.${file.name.split('.').pop()}`,
                             data: base64String
                         });
-
-                        // Render Preview
-                        const imgWrapper = document.createElement('div');
-                        imgWrapper.className = 'relative aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200';
-                        imgWrapper.innerHTML = `
-                            <img src="${base64String}" class="w-full h-full object-cover">
-                        `;
-                        imagePreviewContainer.appendChild(imgWrapper);
+                        renderImagePreviews(); // 추가될 때마다 다시 렌더링
                     }
                     reader.readAsDataURL(file);
                 });
+
+                // ★핵심: 다음 연속 촬영을 위해 input 값을 비워줌 (그래야 change 이벤트가 또 발생함)
+                imageFilesInput.value = ''; 
+            });
+
+            // 개별 이미지 삭제 (이벤트 위임)
+            imagePreviewContainer.addEventListener('click', function(e) {
+                const removeBtn = e.target.closest('.remove-img-btn');
+                if (removeBtn) {
+                    const idToRemove = removeBtn.getAttribute('data-id');
+                    currentFilesData = currentFilesData.filter(img => img.id !== idToRemove);
+                    renderImagePreviews();
+                }
             });
 
             // --- Form Submit & Data Capture ---

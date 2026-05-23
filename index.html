@@ -4,554 +4,484 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>프레스티크 오사카 출장 세무 방어 시스템</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- JSZip CDN for creating ZIP files client-side -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
+        /* Mobile-first adjustments */
         body {
-            -webkit-tap-highlight-color: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
+<body class="bg-gray-50 text-gray-900 font-sans pb-24">
 
-    <!-- Header Banner -->
-    <header class="bg-slate-900 text-white px-4 py-5 shadow-md sticky top-0 z-50">
-        <div class="max-w-md mx-auto flex justify-between items-center">
+    <header class="bg-gray-950 text-white px-4 py-5 shadow-lg sticky top-0 z-50">
+        <div class="max-w-xl mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-lg font-bold tracking-tight">PRESTIQUE AUDITOR v1.2</h1>
-                <p class="text-xs text-slate-400 mt-0.5">오사카 출장 실시간 세무 방어 시스템</p>
+                <h1 class="text-lg font-bold tracking-tight">PRESTIQUE Auditor v1.2</h1>
+                <p class="text-xs text-gray-400 mt-0.5">오사카 출장 실시간 세무 방어 시스템</p>
             </div>
             <span class="bg-emerald-500 text-white text-xs px-2 py-1 rounded-full font-medium animate-pulse">LIVE</span>
         </div>
     </header>
 
-    <main class="max-w-md mx-auto px-4 mt-4 space-y-4">
+    <main class="max-w-xl mx-auto p-4 space-y-6">
 
-        <!-- Quick Status Card -->
-        <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-sm">
-            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">오늘 현재까지 누적 지출</p>
-            <div class="mt-2 flex items-baseline justify-between">
-                <span class="text-3xl font-extrabold tracking-tight text-amber-400" id="totalJPY">0 <span class="text-lg font-normal text-white">￥</span></span>
-                <span class="text-sm text-slate-300 font-medium" id="totalKRW">(약 0 원)</span>
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex justify-between items-center">
+            <div>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">오늘 현재까지 누적 지출(예상)</p>
+                <p class="text-3xl font-extrabold text-amber-500 mt-1" id="totalJPY">0 <span class="text-xl font-normal text-gray-900">￥</span></p>
             </div>
-            <div class="mt-3 pt-3 border-t border-slate-700/50 flex justify-between text-xs text-slate-400">
-                <span>적재된 증빙 데이터: <strong class="text-white" id="recordCount">0</strong>건</span>
-                <span>적용 환율: 100￥ = 950원 (고정)</span>
+            <div class="text-right">
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">적재된 증빙</p>
+                <p class="text-3xl font-extrabold text-gray-950 mt-1" id="recordCount">0 <span class="text-xl font-normal text-gray-900">건</span></p>
             </div>
         </div>
 
-        <!-- Expense Registration Form -->
-        <div class="bg-white rounded-2xl p-5 shadow-xs border border-slate-200/60">
-            <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-                <h2 class="text-base font-bold text-slate-900 flex items-center gap-1.5">
-                    <span class="text-emerald-500 text-xl">📝</span> 신규 증빙 및 업무 적재
-                </h2>
-                <span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md" id="liveClock">00:00:00</span>
-            </div>
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-950 flex items-center gap-2 mb-5 border-b border-gray-100 pb-3">
+                <span class="text-emerald-500 text-xl">📝</span> 신규 증빙 및 업무 적재
+            </h2>
 
-            <form id="auditForm" class="space-y-4">
-                <!-- Category Select -->
+            <form id="auditForm" class="space-y-5">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">업무 카테고리</label>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">업무 카테고리 (필수)</label>
                     <div class="grid grid-cols-2 gap-2" id="categoryContainer">
-                        <button type="button" data-value="돈키호테 VMD" class="cate-btn border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-700 bg-slate-50 transition-all text-left flex items-center justify-between">
+                        <button type="button" data-value="돈키호테 VMD" class="cate-btn border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all text-left flex items-center justify-between">
                             <span>🛒 돈키호테 VMD</span>
                         </button>
-                        <button type="button" data-value="USJ IP식품" class="cate-btn border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-700 bg-slate-50 transition-all text-left flex items-center justify-between">
-                            <span>🦖 USJ IP 제품</span>
+                        <button type="button" data-value="USJ IP식품" class="cate-btn border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all text-left flex items-center justify-between">
+                            <span>🦖 USJ IP 제품/식품</span>
                         </button>
-                        <button type="button" data-value="드럭스토어 뷰티" class="cate-btn border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-700 bg-slate-50 transition-all text-left flex items-center justify-between">
+                        <button type="button" data-value="드럭스토어 뷰티" class="cate-btn border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all text-left flex items-center justify-between">
                             <span>💄 드럭스토어 뷰티</span>
                         </button>
-                        <button type="button" data-value="식비/업무추진" class="cate-btn border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-700 bg-slate-50 transition-all text-left flex items-center justify-between">
+                        <button type="button" data-value="식비/업무추진" class="cate-btn border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all text-left flex items-center justify-between">
                             <span>🍱 식비/업무추진</span>
                         </button>
-                        <button type="button" data-value="교통비/기타" class="cate-btn border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-700 bg-slate-50 transition-all text-left flex items-center justify-between col-span-2">
+                        <button type="button" data-value="교통비/기타" class="cate-btn border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all text-left flex items-center justify-between col-span-2">
                             <span>🚇 교통비 및 기타 샘플매입</span>
                         </button>
                     </div>
-                    <input type="hidden" id="selectedCategory" required>
+                    <input type="hidden" id="selectedCategory" name="selectedCategory" required>
                 </div>
 
-                <!-- Financial Settlement Section Dynamic (+) -->
-                <div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100 space-y-3">
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
                     <div class="flex justify-between items-center">
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">현지 정산 내역 (선택)</label>
-                        <button type="button" id="addSettlementBtn" class="bg-slate-900 text-white rounded-lg px-2.5 py-1 text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform">
-                            <span>+ 내역 추가</span>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">현지 정산 내역 (원화 환산용/선택)</label>
+                        <button type="button" id="addSettlementBtn" class="bg-gray-900 text-white rounded-lg px-3 py-1.5 text-xs font-semibold flex items-center gap-1 active:scale-95 transition-transform">
+                            <span class="text-xl leading-none">+</span> 내역 추가
                         </button>
                     </div>
                     
                     <div id="settlementRows" class="space-y-2">
-                        <!-- Dynamic rows will be injected here -->
-                    </div>
-                </div>
-
-                <!-- Text Note -->
-                <div>
-                    <label for="memo" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">현장 관찰 기록 및 세무 명분 메모</label>
-                    <textarea id="memo" rows="3" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-slate-900 bg-slate-50/50" placeholder="예: 돈키호테 도톤보리점 메인 매대 압박 진열 방식 스크랩. 식용 오일 틴케이스 도입 시 소비자의 소장 욕구 자극 가능성 검토용 사진 촬영함." required></textarea>
-                </div>
-
-                <!-- GPS Location Toggle -->
-                <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm">📍</span>
-                        <div>
-                            <p class="text-xs font-bold text-slate-800">위치 정보(GPS) 함께 저장</p>
-                            <p class="text-[10px] text-slate-400" id="gpsStatus">허용 시 실시간 현지 위경도 기록</p>
                         </div>
-                    </div>
-                    <input type="checkbox" id="useGps" class="w-4 h-4 text-slate-900 border-slate-300 rounded-sm focus:ring-slate-900" checked>
                 </div>
 
-                <!-- Image Attachment (Camera) -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">현장 사진 / 실물 영수증 촬영</label>
+                    <label for="memo" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">상권 관찰 및 소싱 기획 메모 (필수)</label>
+                    <textarea id="memo" name="memo" rows="3" class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50/50" placeholder="예: USJ 미니언즈 구역 틴케이스 쿠키 진열 벤치마킹. 당사 오일 제품 세트 포장에 캐릭터 IP 각인 시 객단가 상승 효과 기대됨." required></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">현장 사진 / 실물 영수증 다중 촬영 (최대 5장)</label>
                     <div class="flex items-center justify-center w-full">
-                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors" id="dropzone">
+                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors" id="dropzone">
                             <div class="flex flex-col items-center justify-center pt-4 pb-3">
                                 <span class="text-2xl mb-1">📷</span>
-                                <p class="text-xs text-slate-500 font-medium">카메라 촬영 또는 이미지 선택</p>
-                                <p class="text-[10px] text-slate-400 mt-0.5" id="fileCountLabel">선택된 파일 없음</p>
+                                <p class="text-xs text-gray-500">카메라 촬영 또는 이미지 선택</p>
+                                <p class="text-[10px] text-gray-400 mt-1" id="fileCountLabel">선택된 파일 없음</p>
                             </div>
-                            <input type="file" id="imageFiles" accept="image/*" class="hidden" multiple />
+                            <input type="file" id="imageFiles" name="imageFiles" accept="image/*" class="hidden" multiple />
                         </label>
                     </div>
-                    <!-- Image Preview Container -->
-                    <div id="imagePreviewContainer" class="grid grid-cols-4 gap-2 mt-2"></div>
+                    <div id="imagePreviewContainer" class="grid grid-cols-5 gap-2 mt-2"></div>
                 </div>
 
-                <!-- Save Button -->
-                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-3.5 text-sm font-bold shadow-xs active:scale-[0.99] transition-transform flex items-center justify-center gap-2">
-                    <span>💾 현재 시간/위치로 증빙 적재</span>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-4 text-base font-bold shadow active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+                    <span>💾</span> 현재 시간으로 증빙 적재
                 </button>
             </form>
         </div>
 
-        <!-- History Section -->
-        <div class="bg-white rounded-2xl p-5 shadow-xs border border-slate-200/60">
-            <h2 class="text-base font-bold text-slate-900 flex items-center gap-1.5 mb-4 border-b border-slate-100 pb-2">
-                <span>🗂️</span> 실시간 증빙 적재 타임라인
-            </h2>
+        <div class="space-y-4 pt-4">
+            <h2 class="text-lg font-semibold text-gray-950 flex items-center gap-2"><span>🗂️</span> 실시간 증빙 적재 타임라인</h2>
             
             <div id="timeline" class="space-y-4 max-h-[400px] overflow-y-auto pr-1">
-                <!-- Dynamic timeline items -->
-                <p class="text-xs text-slate-400 text-center py-6">아직 적재된 증빙 내역이 없습니다.<br>출장지에서 데이터를 입력해 주세요.</p>
+                <p class="text-xs text-gray-400 text-center py-6">아직 적재된 증빙 내역이 없습니다.<br>출장지에서 데이터를 입력해 주세요.</p>
             </div>
-        </div>
-
-        <!-- Export Action Area -->
-        <div class="pt-2">
-            <button id="exportZipBtn" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-4 px-4 rounded-xl shadow-md text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.99]">
-                <span>📥 귀국용 전체 데이터 다운로드 (텍스트+이미지 ALL .ZIP)</span>
-            </button>
-            <p class="text-center text-[10px] text-slate-400 mt-2">※ 모든 텍스트 내역(CSV)과 현장 촬영 원본 사진이 포함된 압축 파일이 다운로드됩니다.</p>
         </div>
 
     </main>
 
-    <!-- App JavaScript Logic -->
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-gray-50/80 backdrop-blur-sm border-t border-gray-200 z-50">
+        <div class="max-w-xl mx-auto">
+            <button id="exportZipBtn" class="w-full bg-gradient-to-r from-gray-800 to-gray-950 hover:from-gray-900 hover:to-black text-white font-bold py-4 px-4 rounded-xl shadow-lg text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+                <span>📥</span> 귀국용 전체 데이터 다운로드 (텍스트+이미지 ALL .ZIP)
+            </button>
+        </div>
+    </div>
+
     <script>
-        // Data Store (LocalStorage)
-        let auditRecords = JSON.parse(localStorage.getItem('PRESTIQUE_AUDIT_RECORDS')) || [];
-        
-        // Active Images State (base64 strings with filenames)
-        let currentFilesData = [];
+        (() => {
+            // Data Store (LocalStorage)
+            const STORAGE_KEY = 'PRESTIQUE_OSAKA_AUDIT_LOG_V1';
+            let auditRecords = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            
+            // Fixed Exchange Rate: 100 JPY = 900 KRW
+            const JPY_TO_KRW_RATE = 9; 
 
-        // Dynamic Elements
-        const form = document.getElementById('auditForm');
-        const timeline = document.getElementById('timeline');
-        const totalJPYEl = document.getElementById('totalJPY');
-        const totalKRWEl = document.getElementById('totalKRW');
-        const recordCountEl = document.getElementById('recordCount');
-        const liveClock = document.getElementById('liveClock');
-        const categoryInput = document.getElementById('selectedCategory');
-        const imageFilesInput = document.getElementById('imageFiles');
-        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-        const fileCountLabel = document.getElementById('fileCountLabel');
-        const settlementRows = document.getElementById('settlementRows');
-        const addSettlementBtn = document.getElementById('addSettlementBtn');
-        const exportZipBtn = document.getElementById('exportZipBtn');
+            // Active Images State (base64 strings with filenames) (★수정 포인트: 배열로 변경)
+            let currentFilesData = [];
 
-        // Live Clock Implementation
-        setInterval(() => {
-            const now = new Date();
-            liveClock.textContent = now.toTimeString().split(' ')[0];
-        }, 1000);
+            // UI Elements
+            const form = document.getElementById('auditForm');
+            const timeline = document.getElementById('timeline');
+            const totalJPYEl = document.getElementById('totalJPY');
+            const recordCountEl = document.getElementById('recordCount');
+            const categoryInput = document.getElementById('selectedCategory');
+            const imageFilesInput = document.getElementById('imageFiles');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const fileCountLabel = document.getElementById('fileCountLabel');
+            const settlementRows = document.getElementById('settlementRows');
+            const addSettlementBtn = document.getElementById('addSettlementBtn');
+            const exportZipBtn = document.getElementById('exportZipBtn');
 
-        // Category Selection UI Logic
-        document.querySelectorAll('.cate-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.cate-btn').forEach(b => {
-                    b.classList.remove('border-slate-900', 'bg-slate-900', 'text-white');
-                    b.classList.add('border-slate-200', 'bg-slate-50', 'text-slate-700');
+            // --- UI Interaction Logic ---
+
+            // Category Selection (Tag Style)
+            document.querySelectorAll('.cate-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.cate-btn').forEach(b => {
+                        b.classList.remove('bg-emerald-600', 'border-emerald-700', 'text-white');
+                        b.classList.add('border-gray-200', 'bg-white', 'text-gray-700');
+                    });
+                    this.classList.remove('border-gray-200', 'bg-white', 'text-gray-700');
+                    this.classList.add('bg-emerald-600', 'border-emerald-700', 'text-white');
+                    categoryInput.value = this.getAttribute('data-value');
                 });
-                this.classList.remove('border-slate-200', 'bg-slate-50', 'text-slate-700');
-                this.classList.add('border-slate-900', 'bg-slate-900', 'text-white');
-                categoryInput.value = this.getAttribute('data-value');
-            });
-        });
-
-        // Dynamic Settlement Rows (+) Implementation
-        function createSettlementRow(itemText = "", amtJpy = "") {
-            const rowId = 'row_' + Date.now() + Math.random().toString(36).substr(2, 4);
-            const div = document.createElement('div');
-            div.className = "flex items-center gap-1.5 bg-white p-2 rounded-lg border border-slate-200 shadow-2xs";
-            div.id = rowId;
-            div.innerHTML = `
-                <input type="text" placeholder="품목 (예: 소스 샘플비)" value="${itemText}" class="settle-item flex-1 border border-slate-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-slate-900" required>
-                <div class="w-24 relative">
-                    <input type="number" placeholder="금액" value="${amtJpy}" class="settle-amt w-full border border-slate-200 rounded-md pl-2 pr-5 py-1 text-xs focus:outline-none focus:border-slate-900 text-right font-semibold text-slate-900" required>
-                    <span class="absolute right-1.5 top-1 text-[10px] text-slate-400 font-bold">￥</span>
-                </div>
-                <button type="button" class="text-rose-500 p-1 hover:bg-rose-50 rounded-md transition-colors" onclick="document.getElementById('${rowId}').remove(); updateTotals();">
-                    🗑️
-                </button>
-            `;
-            settlementRows.appendChild(div);
-            
-            // Wire update trigger on amount change
-            div.querySelector('.settle-amt').addEventListener('input', updateTotals);
-        }
-
-        // Add row on button click
-        addSettlementBtn.addEventListener('click', () => createSettlementRow());
-
-        // Handle Image Attachments and base64 Conversion
-        imageFilesInput.addEventListener('change', function(e) {
-            const files = Array.from(e.target.files);
-            if(files.length === 0) return;
-
-            fileCountLabel.textContent = `${files.length}개의 이미지 선택됨`;
-            imagePreviewContainer.innerHTML = '';
-            currentFilesData = [];
-
-            files.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    const base64String = evt.target.result;
-                    currentFilesData.push({
-                        name: `img_${Date.now()}_${index}.${file.name.split('.').pop()}`,
-                        data: base64String
-                    });
-
-                    // Render Preview
-                    const imgWrapper = document.createElement('div');
-                    imgWrapper.className = 'relative aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200';
-                    imgWrapper.innerHTML = `
-                        <img src="${base64String}" class="w-full h-full object-cover">
-                    `;
-                    imagePreviewContainer.appendChild(imgWrapper);
-                }
-                reader.readAsDataURL(file);
-            });
-        });
-
-        // Calculate Totals Across Entire System
-        function updateTotals() {
-            let totalJpy = 0;
-            
-            // Sum all localstorage data
-            auditRecords.forEach(rec => {
-                if(rec.settlements && rec.settlements.length > 0) {
-                    rec.settlements.forEach(s => totalJpy += parseFloat(s.amount || 0));
-                }
             });
 
-            // Format numbers
-            totalJPYEl.textContent = totalJpy.toLocaleString();
-            totalKRWEl.textContent = `(약 ${(totalJpy * 9.55).toLocaleString()} 원)`;
-            recordCountEl.textContent = auditRecords.length;
-        }
-
-        // Render Timeline UI
-        // function renderTimeline() {
-        //     if (auditRecords.length === 0) {
-        //         timeline.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">아직 적재된 증빙 내역이 없습니다.<br>출장지에서 데이터를 입력해 주세요.</p>`;
-        //         return;
-        //     }
-
-        //     timeline.innerHTML = '';
-        //     // Sort latest first
-        //     const sorted = [...auditRecords].sort((a,b) => b.timestamp - a.timestamp);
-
-        //     sorted.forEach(rec => {
-        //         let jpySum = 0;
-        //         let settlementHtml = '';
-                
-        //         if(rec.settlements && rec.settlements.length > 0) {
-        //             settlementHtml = `<div class="mt-2 bg-slate-50 p-2 rounded-lg space-y-1 border border-slate-100">`;
-        //             rec.settlements.forEach(s => {
-        //                 jpySum += parseFloat(s.amount);
-        //                 settlementHtml += `
-        //                     <div class="flex justify-between text-xs">
-        //                         <span class="text-slate-600">• ${s.item}</span>
-        //                         <span class="font-semibold text-slate-900">${parseFloat(s.amount).toLocaleString()} ￥</span>
-        //                     </div>`;
-        //             });
-        //             settlementHtml += `</div>`;
-        //         }
-
-        //         const imgCount = rec.images ? rec.images.length : 0;
-        //         const locationStr = rec.location ? `📍 ${rec.location.lat.toFixed(4)}, ${rec.location.lng.toFixed(4)}` : '📍 위위도 미기록';
-
-        //         const card = document.createElement('div');
-        //         card.className = "border-l-2 border-slate-900 pl-3 py-1 space-y-1.5 relative";
-        //         card.innerHTML = `
-        //             <div class="flex justify-between items-start">
-        //                 <span class="bg-slate-900 text-white text-[10px] px-2 py-0.5 rounded-md font-bold">${rec.category}</span>
-        //                 <span class="text-[11px] font-bold ${jpySum > 0 ? 'text-amber-600' : 'text-slate-400'}">${jpySum > 0 ? jpySum.toLocaleString() + ' ￥' : '상권 분석'}</span>
-        //             </div>
-        //             <p class="text-xs text-slate-700 font-medium whitespace-pre-wrap">${rec.memo}</p>
-        //             ${settlementHtml}
-        //             <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1">
-        //                 <span>⏰ ${rec.dateTimeStr}</span>
-        //                 <span>${locationStr} ${imgCount > 0 ? `| 📸 사진 ${imgCount}장` : ''}</span>
-        //             </div>
-        //             <button class="absolute top-0 right-0 text-[10px] text-rose-400 opacity-30 hover:opacity-100" onclick="deleteRecord(${rec.timestamp})">삭제</button>
-        //         `;
-        //         timeline.appendChild(card);
-        //     });
-        // }
-// [수정완료] Render Timeline UI & 삭제 이벤트 완전 보강
-        function renderTimeline() {
-            if (auditRecords.length === 0) {
-                timeline.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">아직 적재된 증빙 내역이 없습니다.<br>출장지에서 데이터를 입력해 주세요.</p>`;
-                return;
-            }
-
-            timeline.innerHTML = '';
-            // 최신 기록이 맨 위로 오도록 정렬
-            const sorted = [...auditRecords].sort((a,b) => b.timestamp - a.timestamp);
-
-            sorted.forEach(rec => {
-                let jpySum = 0;
-                let settlementHtml = '';
-                
-                if(rec.settlements && rec.settlements.length > 0) {
-                    settlementHtml = `<div class="mt-2 bg-slate-50 p-2 rounded-lg space-y-1 border border-slate-100">`;
-                    rec.settlements.forEach(s => {
-                        jpySum += parseFloat(s.amount);
-                        settlementHtml += `
-                            <div class="flex justify-between text-xs">
-                                <span class="text-slate-600">• ${s.item}</span>
-                                <span class="font-semibold text-slate-900">${parseFloat(s.amount).toLocaleString()} ￥</span>
-                            </div>`;
-                    });
-                    settlementHtml += `</div>`;
-                }
-
-                const imgCount = rec.images ? rec.images.length : 0;
-                const locationStr = rec.location ? `📍 ${rec.location.lat.toFixed(4)}, ${rec.location.lng.toFixed(4)}` : '📍 위경도 미기록';
-
-                // 카드 엘리먼트를 직접 생성하여 삭제 버튼의 데이터셋을 확실하게 매핑합니다.
-                const card = document.createElement('div');
-                card.className = "border-l-2 border-slate-900 pl-3 py-1 space-y-1.5 relative group";
-                card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <span class="bg-slate-900 text-white text-[10px] px-2 py-0.5 rounded-md font-bold">${rec.category}</span>
-                        <span class="text-[11px] font-bold ${jpySum > 0 ? 'text-amber-600' : 'text-slate-400'}">${jpySum > 0 ? jpySum.toLocaleString() + ' ￥' : '상권 분석'}</span>
+            // Add Settlement Row (+)
+            const createSettlementRow = () => {
+                const rowId = `row_${Date.now()}`;
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 shadow-inner";
+                div.id = rowId;
+                div.innerHTML = `
+                    <input type="text" placeholder="품목" class="settle-item flex-1 border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:ring-emerald-500 focus:border-emerald-500" required>
+                    <div class="w-28 relative">
+                        <input type="number" placeholder="금액" class="settle-amt w-full border border-gray-200 rounded-md pl-2 pr-6 py-1.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 text-right font-semibold text-gray-950" required>
+                        <span class="absolute right-2 top-2 text-xs text-gray-400 font-bold">￥</span>
                     </div>
-                    <p class="text-xs text-slate-700 font-medium whitespace-pre-wrap">${rec.memo}</p>
-                    ${settlementHtml}
-                    <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1">
-                        <span>⏰ ${rec.dateTimeStr}</span>
-                        <span>${locationStr} ${imgCount > 0 ? `| 📸 사진 ${imgCount}장` : ''}</span>
-                    </div>
-                    <button type="button" data-id="${rec.timestamp}" class="delete-btn absolute top-0 right-0 text-xs font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-md border border-rose-100 active:bg-rose-100 transition-colors">
-                        삭제
+                    <button type="button" class="text-rose-500 p-1 hover:bg-rose-50 rounded" onclick="document.getElementById('${rowId}').remove(); window.dispatchEvent(new Event('settlementChanged'));">
+                        🗑️
                     </button>
                 `;
-                timeline.appendChild(card);
-            });
-        }
-
-        // 타임라인 내부 삭제 버튼 터치 시 즉각 작동하는 고성능 리스너
-        timeline.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('delete-btn')) {
-                const targetId = parseFloat(e.target.getAttribute('data-id'));
-                if (confirm('대표님, 이 증빙 기록을 타임라인에서 영구 삭제하시겠습니까?')) {
-                    auditRecords = auditRecords.filter(r => r.timestamp !== targetId);
-                    localStorage.setItem('PRESTIQUE_AUDIT_RECORDS', JSON.stringify(auditRecords));
-                    updateTotals();
-                    renderTimeline();
-                }
-            }
-        });
-        window.deleteRecord = function(timestamp) {
-            if(confirm('이 기록을 삭제하시겠습니까?')) {
-                auditRecords = auditRecords.filter(r => r.timestamp !== timestamp);
-                localStorage.setItem('PRESTIQUE_AUDIT_RECORDS', JSON.stringify(auditRecords));
-                updateTotals();
-                renderTimeline();
-            }
-        }
-
-        // Form Submit & Data Capture Logic
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            if(!categoryInput.value) {
-                alert('업무 카테고리를 하나 선택해 주세요.');
-                return;
-            }
-
-            // Gather Dynamic Settlements
-            const settlements = [];
-            // 클래스명(.settle-item)이 있는 인풋들을 기준으로 안전하게 역추적합니다.
-            const itemInputs = settlementRows.querySelectorAll('.settle-item');
-            
-            itemInputs.forEach(itemInput => {
-                const row = itemInput.closest('div'); // 인풋이 속한 해당 행(Row)만 타겟팅
-                if (row) {
-                    const amtInput = row.querySelector('.settle-amt');
-                    const item = itemInput.value.trim();
-                    const amount = amtInput ? amtInput.value : "";
-
-                    // 품목과 금액이 모두 입력된 정상적인 데이터만 안전하게 필터링하여 적재
-                    if (item && amount) {
-                        settlements.push({ item, amount: parseFloat(amount) });
-                    }
-                }
-            });
-
-            const now = new Date();
-            const dateTimeStr = now.getFullYear() + '-' + 
-                                String(now.getMonth()+1).padStart(2,'0') + '-' + 
-                                String(now.getDate()).padStart(2,'0') + ' ' + 
-                                String(now.getHours()).padStart(2,'0') + ':' + 
-                                String(now.getMinutes()).padStart(2,'0') + ':' + 
-                                String(now.getSeconds()).padStart(2,'0');
-
-            const newRecord = {
-                timestamp: now.getTime(),
-                dateTimeStr: dateTimeStr,
-                category: categoryInput.value,
-                memo: document.getElementById('memo').value.trim(),
-                settlements: settlements,
-                images: currentFilesData, // base64 payload array
-                location: null
+                settlementRows.appendChild(div);
+                window.dispatchEvent(new Event('settlementChanged'));
             };
+            addSettlementBtn.addEventListener('click', createSettlementRow);
 
-            // Capture GPS if turned on
-            if(document.getElementById('useGps').checked && navigator.geolocation) {
-                document.getElementById('gpsStatus').textContent = "위치 획득 중...";
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        newRecord.location = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        };
-                        saveAndReset(newRecord);
-                    },
-                    (error) => {
-                        console.warn("GPS Fail:", error);
-                        saveAndReset(newRecord); // save anyway even if GPS fails
-                    },
-                    { timeout: 5000 }
-                );
-            } else {
-                saveAndReset(newRecord);
-            }
-        });
+            // --- Multi-Image Logic (★핵심 수정 포인트) ---
 
-        function saveAndReset(record) {
-            auditRecords.push(record);
-            localStorage.setItem('PRESTIQUE_AUDIT_RECORDS', JSON.stringify(auditRecords));
-            
-            // UI Update
-            updateTotals();
-            renderTimeline();
+            imageFilesInput.addEventListener('change', function(e) {
+                const files = Array.from(e.target.files);
+                if(files.length === 0) return;
 
-            // Reset form controls
-            form.reset();
-            settlementRows.innerHTML = '';
-            imagePreviewContainer.innerHTML = '';
-            fileCountLabel.textContent = '선택된 파일 없음';
-            currentFilesData = [];
-            document.getElementById('gpsStatus').textContent = "허용 시 실시간 현지 위경도 기록";
-            document.querySelectorAll('.cate-btn').forEach(b => {
-                b.classList.remove('border-slate-900', 'bg-slate-900', 'text-white');
-                b.classList.add('border-slate-200', 'bg-slate-50', 'text-slate-700');
+                // Max 5 images per record for localstorage performance
+                const targetFiles = files.slice(0, 5);
+                fileCountLabel.textContent = `${targetFiles.length}개의 이미지 선택됨 (최대5장)`;
+
+                imagePreviewContainer.innerHTML = ''; // Clear previous previews
+                currentFilesData = []; // Reset state
+
+                targetFiles.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        const base64String = evt.target.result;
+                        // Store as object with generated unique name
+                        currentFilesData.push({
+                            name: `img_${Date.now()}_${index}.${file.name.split('.').pop()}`,
+                            data: base64String
+                        });
+
+                        // Render Preview
+                        const imgWrapper = document.createElement('div');
+                        imgWrapper.className = 'relative aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200';
+                        imgWrapper.innerHTML = `
+                            <img src="${base64String}" class="w-full h-full object-cover">
+                        `;
+                        imagePreviewContainer.appendChild(imgWrapper);
+                    }
+                    reader.readAsDataURL(file);
+                });
             });
-            categoryInput.value = '';
-            
-            alert('출장 증빙 데이터가 정상적으로 시스템에 적재되었습니다.');
-        }
 
-        // Export ZIP Functionality (Combines text csv log and binary images)
-        exportZipBtn.addEventListener('click', async function() {
-            if(auditRecords.length === 0) {
-                alert('다운로드할 증빙 데이터가 존재하지 않습니다.');
-                return;
-            }
+            // --- Form Submit & Data Capture ---
 
-            exportZipBtn.disabled = true;
-            exportZipBtn.textContent = "⚡ ZIP 압축 파일 생성 중...";
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
 
-            try {
-                const zip = new JSZip();
+                if(!categoryInput.value) {
+                    alert('업무 카테고리를 하나 선택해 주세요.');
+                    return;
+                }
+
+                // Gather Dynamic Settlements
+                const settlements = [];
+                // 클래스명(.settle-item)이 있는 인풋들을 기준으로 안전하게 역추적합니다.
+                const itemInputs = settlementRows.querySelectorAll('.settle-item');
                 
-                // 1. Generate Structured Text Data (CSV Format for tax accountant)
-                let csvContent = "\uFEFF순번,일시,카테고리,상권관찰 및 세무명분 메모,정산합계(JPY),세부내역,위도,경도,연동파일명\n";
-                
-                auditRecords.forEach((rec, idx) => {
-                    let totalJpy = 0;
-                    let detailParts = [];
-                    if(rec.settlements) {
-                        rec.settlements.forEach(s => {
-                            totalJpy += parseFloat(s.amount);
-                            detailParts.push(`${s.item}(${s.amount}￥)`);
-                        });
-                    }
-                    const detailStr = detailParts.join(' | ');
-                    const lat = rec.location ? rec.location.lat : '';
-                    const lng = rec.location ? rec.location.lng : '';
-                    
-                    let linkedFiles = [];
-                    if(rec.images) {
-                        rec.images.forEach(img => {
-                            linkedFiles.push(img.name);
-                            
-                            // 2. Add individual image base64 file to ZIP root/images directory
-                            const base64Data = img.data.split(',')[1]; // strip header metadata
-                            zip.file(`images/${img.name}`, base64Data, {base64: true});
-                        });
-                    }
+                itemInputs.forEach(itemInput => {
+                    const row = itemInput.closest('div'); // 인풋이 속한 해당 행(Row)만 타겟팅
+                    if (row) {
+                        const amtInput = row.querySelector('.settle-amt');
+                        const item = itemInput.value.trim();
+                        const amount = amtInput ? amtInput.value : "";
 
-                    // Escape quotes for CSV stability
-                    const escapedMemo = rec.memo.replace(/"/g, '""');
-                    csvContent += `"${idx+1}","${rec.dateTimeStr}","${rec.category}","${escapedMemo}","${totalJpy}","${detailStr}","${lat}","${lng}","${linkedFiles.join(';')}"\n`;
+                        // 품목과 금액이 모두 입력된 정상적인 데이터만 안전하게 필터링하여 적재
+                        if (item && amount) {
+                            settlements.push({ item, amount: parseFloat(amount) });
+                        }
+                    }
                 });
 
-                // Add CSV file to ZIP container
-                zip.file("오사카_출장_세무증빙_마스터기록.csv", csvContent);
+                const now = new Date();
+                const dateTimeStr = now.toISOString().replace('T', ' ').slice(0, 19);
 
-                // 3. Generate and trigger download
-                const content = await zip.generateAsync({type: "blob"});
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(content);
-                link.download = `PRESTIQUE_OSAKA_AUDIT_DATA_${new Date().toISOString().slice(0,10)}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const newRecord = {
+                    timestamp: now.getTime(),
+                    dateTimeStr: dateTimeStr,
+                    category: categoryInput.value,
+                    memo: document.getElementById('memo').value.trim(),
+                    settlements: settlements,
+                    images: currentFilesData, // ★수정 포인트: base64 payload array 저장
+                    location: null
+                };
 
-            } catch(err) {
-                console.error(err);
-                alert('ZIP 압축 생성 중 오류가 발생했습니다.');
-            } finally {
-                exportZipBtn.disabled = false;
-                exportZipBtn.textContent = "📥 귀국용 전체 데이터 다운로드 (텍스트+이미지 ALL .ZIP)";
+                // Capture GPS if turned on
+                // if(document.getElementById('useGps').checked && navigator.geolocation) {
+                //     document.getElementById('gpsStatus').classList.remove('hidden');
+                //     navigator.geolocation.getCurrentPosition(
+                //         (position) => {
+                //             newRecord.location = {
+                //                 lat: position.coords.latitude,
+                //                 lng: position.coords.longitude
+                //             };
+                //             saveAndReset(newRecord);
+                //         },
+                //         (error) => {
+                //             console.warn("GPS Fail:", error);
+                //             saveAndReset(newRecord); // save anyway even if GPS fails
+                //         }
+                //     );
+                // } else {
+                //     saveAndReset(newRecord);
+                // }
+                saveAndReset(newRecord);
+            });
+
+            function saveAndReset(record) {
+                auditRecords.push(record);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(auditRecords));
+                
+                // UI Update
+                renderTimeline();
+                updateQuickStats();
+
+                // Reset form controls
+                form.reset();
+                categoryInput.value = '';
+                document.querySelectorAll('.cate-btn').forEach(b => {
+                    b.classList.remove('bg-emerald-600', 'border-emerald-700', 'text-white');
+                    b.classList.add('border-gray-200', 'bg-white', 'text-gray-700');
+                });
+                settlementRows.innerHTML = '';
+                imagePreviewContainer.innerHTML = '';
+                currentFilesData = [];
+                fileCountLabel.textContent = '선택된 파일 없음';
+                // document.getElementById('gpsStatus').classList.add('hidden');
+                
+                alert('출장 증빙 데이터가 정상적으로 시스템에 적재되었습니다.');
             }
-        });
 
-        // Initialize display
-        updateTotals();
-        renderTimeline();
+            // --- Timeline & Stats Rendering ---
+
+            function updateQuickStats() {
+                let totalJpySum = 0;
+                auditRecords.forEach(rec => {
+                    if(rec.settlements) {
+                        rec.settlements.forEach(s => totalJpySum += s.amount);
+                    }
+                });
+
+                totalJPYEl.textContent = totalJpySum.toLocaleString();
+                recordCountEl.textContent = auditRecords.length;
+            }
+
+            // --- Timeline & Stats Rendering ---
+
+            function updateQuickStats() {
+                let totalJpySum = 0;
+                auditRecords.forEach(rec => {
+                    if(rec.settlements) {
+                        rec.settlements.forEach(s => totalJpySum += s.amount);
+                    }
+                });
+
+                totalJPYEl.textContent = totalJpySum.toLocaleString();
+                recordCountEl.textContent = auditRecords.length;
+            }
+
+            function renderTimeline() {
+                if (auditRecords.length === 0) {
+                    timeline.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">아직 적재된 증빙 내역이 없습니다.<br>출장지에서 데이터를 입력해 주세요.</p>`;
+                    return;
+                }
+
+                timeline.innerHTML = '';
+                // Sort latest first
+                const sortedRecords = [...auditRecords].sort((a,b) => b.timestamp - a.timestamp);
+
+                sortedRecords.forEach(rec => {
+                    let totalJpy = 0;
+                    let settlementHtml = '';
+                    if(rec.settlements && rec.settlements.length > 0) {
+                        settlementHtml = `<div class="mt-2 bg-gray-50 p-2 rounded-lg space-y-1 border border-gray-100">`;
+                        rec.settlements.forEach(s => {
+                            totalJpy += s.amount;
+                            settlementHtml += `
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-gray-600">• ${s.item}</span>
+                                    <span class="font-semibold text-gray-950">${s.amount.toLocaleString()} ￥</span>
+                                </div>`;
+                        });
+                        settlementHtml += `</div>`;
+                    }
+
+                    const imgCount = rec.images ? rec.images.length : 0;
+                    const item = document.createElement('div');
+                    item.className = "border-l-2 border-emerald-500 pl-3 py-1 space-y-1.5 relative";
+                    item.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-1.5">
+                                <span class="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-md font-bold">${rec.category}</span>
+                                <button type="button" data-timestamp="${rec.timestamp}" class="delete-record-btn text-[10px] text-rose-500 bg-rose-50 hover:bg-rose-100 border border-rose-100 px-1.5 py-0.5 rounded transition-colors">
+                                    🗑️ 삭제
+                                </button>
+                            </div>
+                            <span class="text-[11px] font-bold text-amber-600">${totalJpy.toLocaleString()} ￥</span>
+                        </div>
+                        <p class="text-xs text-gray-700 font-medium whitespace-pre-wrap">${rec.memo}</p>
+                        ${settlementHtml}
+                        <div class="flex justify-between items-center text-[10px] text-gray-400 pt-1">
+                            <span>⏰ ${rec.dateTimeStr}</span>
+                            <span>${imgCount > 0 ? `| 📸 사진 ${imgCount}장` : ''}</span>
+                        </div>
+                    `;
+                    timeline.appendChild(item);
+                });
+            }
+
+            // [신규 추가] 타임라인 내 삭제 버튼 클릭 이벤트 처리 (이벤트 위임)
+            timeline.addEventListener('click', function(e) {
+                const deleteBtn = e.target.closest('.delete-record-btn');
+                if (deleteBtn) {
+                    const timestamp = parseInt(deleteBtn.getAttribute('data-timestamp'), 10);
+                    
+                    if (confirm('이 증빙 기록을 삭제하시겠습니까?')) {
+                        // 해당 timestamp를 가진 기록을 배열에서 제거
+                        auditRecords = auditRecords.filter(rec => rec.timestamp !== timestamp);
+                        
+                        // 로컬 스토리지 동기화
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(auditRecords));
+                        
+                        // 통계 및 타임라인 UI 리렌더링
+                        updateQuickStats();
+                        renderTimeline();
+                    }
+                }
+            });
+
+
+            // --- ZIP Export Logic (Client-Side) (★핵심 수정 포인트: 다중 이미지 패키징) ---
+
+            exportZipBtn.addEventListener('click', async function() {
+                if(auditRecords.length === 0) {
+                    alert('다운로드할 증빙 데이터가 존재하지 않습니다.');
+                    return;
+                }
+
+                exportZipBtn.disabled = true;
+                exportZipBtn.textContent = "⚡ ZIP 압축 파일 생성 중...";
+
+                try {
+                    const zip = new JSZip();
+                    
+                    // 1. Generate Structured Text Data (CSV Format for tax accountant)
+                    // Add BOM for proper encoding when opened in Excel
+                    let csvContent = "\uFEFF순번,일시,카테고리,상권 관찰 및 소싱 기획 메모,정산 합계(JPY),정산 세부 내역,연동 이미지 파일명(세미콜론 구분)\n";
+                    
+                    auditRecords.forEach((rec, idx) => {
+                        let totalJpy = 0;
+                        let detailParts = [];
+                        if(rec.settlements) {
+                            rec.settlements.forEach(s => {
+                                totalJpy += s.amount;
+                                detailParts.push(`${s.item}(${s.amount}￥)`);
+                            });
+                        }
+                        const detailStr = detailParts.join(' | ');
+                        const lat = rec.location ? rec.location.lat : '';
+                        const lng = rec.location ? rec.location.lng : '';
+                        
+                        // Handle multiple image filenames
+                        let linkedFiles = [];
+                        if(rec.images) {
+                            rec.images.forEach(img => {
+                                linkedFiles.push(img.name);
+                                
+                                // 2. Add individual image base64 file to ZIP root folder
+                                const base64Data = img.data.split(',')[1]; // strip header metadata
+                                zip.file(`images/${img.name}`, base64Data, {base64: true});
+                            });
+                        }
+
+                        // Escape quotes for CSV stability
+                        const escapedMemo = rec.memo.replace(/"/g, '""');
+                        csvContent += `"${idx+1}","${rec.dateTimeStr}","${rec.category}","${escapedMemo}","${totalJpy}","${detailStr}","${lat}","${lng}","${linkedFiles.join(';')}"\n`;
+                    });
+
+                    // Add CSV file to ZIP container
+                    zip.file("오사카_출장_세무증빙_마스터기록.csv", csvContent);
+
+                    // 3. Generate ZIP binary and trigger download
+                    const content = await zip.generateAsync({type: "blob"});
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(content);
+                    link.download = `PRESTIQUE_OSAKA_AUDIT_DATA_${new Date().toISOString().slice(0,10)}.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                } catch(err) {
+                    console.error(err);
+                    alert('ZIP 압축 파일 생성 중 오류가 발생했습니다.');
+                } finally {
+                    exportZipBtn.disabled = false;
+                    exportZipBtn.textContent = "📥 귀국용 전체 데이터 다운로드 (ALL .ZIP)";
+                }
+            });
+
+            // Handle UI events for total recalculation
+            window.addEventListener('settlementChanged', updateQuickStats);
+
+            // Init load
+            updateQuickStats();
+            renderTimeline();
+
+        })();
     </script>
 </body>
 </html>

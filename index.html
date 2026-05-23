@@ -270,7 +270,7 @@
                 e.preventDefault();
 
                 if(!categoryInput.value) {
-                    alert('업무 카테고리를 하나 선택해 주세요.');
+                    showToast('⚠️', '업무 카테고리를 선택해 주세요.');
                     return;
                 }
 
@@ -305,26 +305,6 @@
                     images: currentFilesData, // ★수정 포인트: base64 payload array 저장
                     location: null
                 };
-
-                // Capture GPS if turned on
-                // if(document.getElementById('useGps').checked && navigator.geolocation) {
-                //     document.getElementById('gpsStatus').classList.remove('hidden');
-                //     navigator.geolocation.getCurrentPosition(
-                //         (position) => {
-                //             newRecord.location = {
-                //                 lat: position.coords.latitude,
-                //                 lng: position.coords.longitude
-                //             };
-                //             saveAndReset(newRecord);
-                //         },
-                //         (error) => {
-                //             console.warn("GPS Fail:", error);
-                //             saveAndReset(newRecord); // save anyway even if GPS fails
-                //         }
-                //     );
-                // } else {
-                //     saveAndReset(newRecord);
-                // }
                 saveAndReset(newRecord);
             });
 
@@ -349,7 +329,7 @@
                 fileCountLabel.textContent = '선택된 파일 없음';
                 // document.getElementById('gpsStatus').classList.add('hidden');
                 
-                alert('출장 증빙 데이터가 정상적으로 시스템에 적재되었습니다.');
+                showToast('✅', '증빙 데이터가 성공적으로 적재되었습니다.');
             }
 
             // --- Timeline & Stats Rendering ---
@@ -455,7 +435,7 @@
 
             exportZipBtn.addEventListener('click', async function() {
                 if(auditRecords.length === 0) {
-                    alert('다운로드할 증빙 데이터가 존재하지 않습니다.');
+                    showToast('❗', '다운로드할 데이터가 없습니다.');
                     return;
                 }
 
@@ -513,7 +493,7 @@
 
                 } catch(err) {
                     console.error(err);
-                    alert('ZIP 압축 파일 생성 중 오류가 발생했습니다.');
+                    showToast('❌', 'ZIP 압축 파일 생성 중 오류가 발생했습니다.');
                 } finally {
                     exportZipBtn.disabled = false;
                     exportZipBtn.textContent = "📥 귀국용 전체 데이터 다운로드 (ALL .ZIP)";
@@ -526,6 +506,73 @@
             // Init load
             updateQuickStats();
             renderTimeline();
+            
+            // --- Custom UI Controllers (팝업 & 모달) ---
+            const toastEl = document.getElementById('toastMsg');
+            let toastTimer;
+            function showToast(icon, msg) {
+                document.getElementById('toastIcon').textContent = icon;
+                document.getElementById('toastText').textContent = msg;
+                
+                toastEl.classList.remove('-translate-y-24', 'opacity-0');
+                toastEl.classList.add('translate-y-0', 'opacity-100');
+                
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toastEl.classList.remove('translate-y-0', 'opacity-100');
+                    toastEl.classList.add('-translate-y-24', 'opacity-0');
+                }, 2500); // 2.5초 후 사라짐
+            }
+
+            const modalEl = document.getElementById('confirmModal');
+            const modalBox = document.getElementById('confirmBox');
+            let confirmCallback = null;
+
+            function showConfirm(callback) {
+                confirmCallback = callback;
+                modalEl.classList.remove('hidden');
+                // 약간의 지연을 주어 트랜지션 애니메이션이 작동하도록 함
+                setTimeout(() => {
+                    modalEl.classList.remove('opacity-0');
+                    modalBox.classList.remove('scale-95');
+                    modalBox.classList.add('scale-100');
+                }, 10);
+            }
+
+            function closeConfirm() {
+                modalEl.classList.add('opacity-0');
+                modalBox.classList.remove('scale-100');
+                modalBox.classList.add('scale-95');
+                setTimeout(() => {
+                    modalEl.classList.add('hidden');
+                    confirmCallback = null;
+                }, 200);
+            }
+
+            document.getElementById('btnCancel').addEventListener('click', closeConfirm);
+            document.getElementById('btnConfirm').addEventListener('click', () => {
+                if(confirmCallback) confirmCallback();
+                closeConfirm();
+            });
+
+            // --- Form Submit & Delete Validation Update ---
+
+            // 2. timeline.addEventListener('click') 내의 confirm() 삭제 로직 교체:
+            timeline.addEventListener('click', function(e) {
+                const deleteBtn = e.target.closest('.delete-record-btn');
+                if (deleteBtn) {
+                    const timestamp = parseInt(deleteBtn.getAttribute('data-timestamp'), 10);
+                    
+                    // 네이티브 confirm 대신 커스텀 모달 호출
+                    showConfirm(() => {
+                        auditRecords = auditRecords.filter(rec => rec.timestamp !== timestamp);
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(auditRecords));
+                        updateQuickStats();
+                        renderTimeline();
+                        showToast('🗑️', '기록이 삭제되었습니다.');
+                    });
+                }
+            });
 
         })();
     </script>
